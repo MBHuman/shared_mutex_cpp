@@ -22,9 +22,23 @@
  * +---------+---------+-------+---------+-------------------+---------------------+
  * | Readers | Writers | Reads | Updates | Shared Mutex Time | Standard Mutex Time |
  * +---------+---------+-------+---------+-------------------+---------------------+
- * |     100 |       5 | 10000 |       1 |           1501 ms |             3012 ms |
+ * |      50 |       2 | 10000 |       1 |            223 ms |              270 ms |
  * +---------+---------+-------+---------+-------------------+---------------------+
- * |     100 |       5 | 10000 |      10 |           1460 ms |             2904 ms |
+ * |      50 |       2 | 10000 |       5 |            233 ms |              299 ms |
+ * +---------+---------+-------+---------+-------------------+---------------------+
+ * |      20 |      20 |  5000 |      50 |            139 ms |              117 ms |
+ * +---------+---------+-------+---------+-------------------+---------------------+
+ * |     100 |       5 | 50000 |       5 |           1880 ms |             2783 ms |
+ * +---------+---------+-------+---------+-------------------+---------------------+
+ * |       5 |       5 |  1000 |    1000 |            375 ms |              342 ms |
+ * +---------+---------+-------+---------+-------------------+---------------------+
+ * |       3 |      10 |   500 |    1000 |            755 ms |              672 ms |
+ * +---------+---------+-------+---------+-------------------+---------------------+
+ * |       2 |      20 |   500 |    2000 |           3310 ms |             2695 ms |
+ * +---------+---------+-------+---------+-------------------+---------------------+
+ * |       1 |      15 |   100 |     500 |            565 ms |              508 ms |
+ * +---------+---------+-------+---------+-------------------+---------------------+
+ * |       1 |      20 |    50 |    1000 |           1645 ms |             1352 ms |
  * +---------+---------+-------+---------+-------------------+---------------------+
  * ```
  */
@@ -234,7 +248,7 @@ private:
         for (int i = 0; i < numUpdates; ++i) {
             std::unique_lock lock(sharedMutex);
             sharedData.counter++;
-            sharedData.text = RandomStringGenerator::generate(100000);
+            sharedData.text = RandomStringGenerator::generate(10000);
         }
     }
 
@@ -260,7 +274,7 @@ private:
         for (int i = 0; i < numUpdates; ++i) {
             std::lock_guard lock(standardMutex);
             sharedData.counter++;
-            sharedData.text = RandomStringGenerator::generate(100000);
+            sharedData.text = RandomStringGenerator::generate(10000);
         }
     }
 
@@ -416,10 +430,49 @@ private:
 };
 
 int main() {
+    // Create a Benchmark instance and add various test cases to evaluate performance
+
     Benchmark()
-        .addTestCase(100, 5, static_cast<int>(1e4), 1)
-        .addTestCase(100, 5, static_cast<int>(1e4), 10)
+        // Test case 1: High number of readers, few writers, minimal write workload
+        // This demonstrates the performance gain of using shared_mutex with a read-heavy load
+        .addTestCase(50, 2, static_cast<int>(1e4), 1)
+        
+        // Test case 2: High number of readers, few writers, moderate write workload
+        // Tests how shared_mutex handles a slightly increased update load
+        .addTestCase(50, 2, static_cast<int>(1e4), 5)
+        
+        // Test case 3: Moderate number of readers and writers, moderate read workload
+        // Evaluates the balance of shared_mutex performance under mixed read-write load
+        .addTestCase(20, 20, static_cast<int>(5e3), 50)
+        
+        // Test case 4: Heavy read workload, very few writers
+        // Demonstrates the efficiency of shared_mutex when there are very few updates
+        .addTestCase(100, 5, static_cast<int>(5e4), 5)
+        
+        // Test case 5: Equal number of readers and writers, moderate workload
+        // Helps observe shared_mutex performance with balanced reading and writing
+        .addTestCase(5, 5, static_cast<int>(1e3), static_cast<int>(1e3))
+
+        // Test case 6: More writers than readers, moderate workload
+        // Highlights how shared_mutex performs when write operations dominate
+        .addTestCase(3, 10, static_cast<int>(5e2), static_cast<int>(1e3))
+        
+        // Test case 7: Few readers, many writers, moderate workload
+        // Stresses shared_mutex with a high count of updates and low read activity
+        .addTestCase(2, 20, static_cast<int>(5e2), static_cast<int>(2e3))
+        
+        // Test case 8: Single reader, many writers, minimal workload
+        // Tests the extreme case of a single reader versus high write activity
+        .addTestCase(1, 15, 100, 500)
+        
+        // Test case 9: Single reader, high number of writers, moderate workload
+        // Demonstrates shared_mutex behavior when write access is highly prioritized
+        .addTestCase(1, 20, 50, static_cast<int>(1e3))
+
+        // Execute all test cases and measure performance
         .run()
+
+        // Print the benchmark results in a formatted table for easy comparison
         .printBenchmarkTable();
 
     return 0;
