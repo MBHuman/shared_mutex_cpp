@@ -1,0 +1,57 @@
+name: Build and Documentation CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        gcc_version: ['9', '10', '11', '12']  # Задаем версии gcc для проверки
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Install GCC ${{ matrix.gcc_version }}
+        run: |
+          sudo apt update
+          sudo apt install -y g++-${{ matrix.gcc_version }}
+          export CXX=g++-${{ matrix.gcc_version }}
+        shell: bash
+
+      - name: Build with Makefile
+        run: make
+        shell: bash
+
+  documentation:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Install Doxygen and LaTeX
+        run: |
+          sudo apt update
+          sudo apt install -y doxygen texlive-full
+
+      - name: Generate Doxygen documentation
+        run: doxygen Doxyfile
+
+      - name: Compile PDF documentation
+        working-directory: docs/latex
+        run: |
+          make refman.pdf
+
+      - name: Upload PDF documentation
+        uses: actions/upload-artifact@v3
+        with:
+          name: Doxygen-PDF
+          path: docs/latex/refman.pdf
