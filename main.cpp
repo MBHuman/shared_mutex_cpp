@@ -93,7 +93,51 @@ struct SharedData {
 
 /**
  * @class LockTester
- * @brief A class to test and benchmark shared and standard mutexes with multiple readers and writers.
+ * @brief Demonstrates the performance differences between `std::shared_mutex` and `std::mutex` in a multi-threaded environment with multiple readers and writers.
+ *
+ * The `LockTester` class is designed to benchmark and compare the efficiency of `std::shared_mutex` and `std::mutex` under different scenarios,
+ * particularly focusing on cases where the number of reader threads exceeds the number of writer threads.
+ *
+ * **Purpose and Demonstration:**
+ *
+ * - **Shared vs. Exclusive Locking:**
+ *   - `std::shared_mutex` allows multiple threads to acquire a shared (read) lock simultaneously, enabling concurrent read operations.
+ *   - `std::mutex` only allows one thread to hold the lock at any given time, blocking both read and write operations from other threads.
+ * - **Use Case Scenario:**
+ *   - In applications where read operations are frequent and write operations are infrequent, using `std::shared_mutex` can significantly improve performance by allowing multiple readers to access the shared data concurrently.
+ *   - This class demonstrates how `std::shared_mutex` can be more efficient than `std::mutex` in such scenarios.
+ *
+ * **Functionality:**
+ *
+ * - **Benchmarking Methods:**
+ *   - `testSharedMutex()`: Measures the execution time when using `std::shared_mutex` with multiple reader and writer threads.
+ *   - `testStandardMutex()`: Measures the execution time when using `std::mutex` with multiple reader and writer threads.
+ * - **Thread Functions:**
+ *   - Reader threads execute either `readerSharedLock()` or `readerStandardLock()`, depending on the mutex type, to perform read operations.
+ *   - Writer threads execute either `writerSharedLock()` or `writerStandardLock()`, depending on the mutex type, to perform write operations.
+ *
+ * **Usage:**
+ *
+ * - Create an instance of `LockTester` by specifying the number of readers, writers, reads per reader, and updates per writer.
+ * - Call `testSharedMutex()` and `testStandardMutex()` to perform the benchmarks.
+ * - Access the `times` map to retrieve the execution times for comparison.
+ *
+ * **Example:**
+ *
+ * ```cpp
+ * LockTester tester(10, 2, 1000, 500); // 10 readers, 2 writers
+ * tester.testSharedMutex();
+ * tester.testStandardMutex();
+ * std::cout << "Shared Mutex Time: " << tester.times["Shared Mutex Time"] << " ms\n";
+ * std::cout << "Standard Mutex Time: " << tester.times["Standard Mutex Time"] << " ms\n";
+ * ```
+ *
+ * **Conclusion:**
+ *
+ * - The results demonstrate that `std::shared_mutex` provides better performance in scenarios with a high read-to-write ratio.
+ * - This class effectively showcases the conditions under which `std::shared_mutex` is more efficient compared to `std::mutex`.
+ *
+ * @note Copy and move constructors and assignment operators are deleted to prevent copying of the `LockTester` instance.
  */
 class LockTester final {
 public:
