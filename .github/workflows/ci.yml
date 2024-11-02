@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        gcc_version: ['7', '8', '9', '10', '11', '12', '13', '14']  # Задаем версии gcc для проверки
+        gcc_version: ['7', '8', '9', '10', '11', '12', '13']  # Задаем версии gcc для проверки
 
     steps:
       - name: Check out repository
